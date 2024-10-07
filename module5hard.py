@@ -1,24 +1,43 @@
+from time import sleep
+
+
+def calculate_hash(password: str) -> int:
+    return sum([ord(x) for x in password])
+
+
 class User:
     def __init__(self, nickname: str, password_hash: int, age: int):
         """
-        Каждый объект класса User должен обладать следующими атрибутами и методами:
-        Атриубуты: nickname(имя пользователя, строка), password(в хэшированном виде, число), age(возраст, число)
+        :param nickname: имя пользователя, строка
+        :param password_hash: в хэшированном виде, число
+        :param age: возраст, число
         """
         self.nickname = nickname
         self.password_hash = password_hash
         self.age = age
 
+    def __str__(self):
+        return self.nickname
+
+    def __eq__(self, other: 'User'):
+        return self.nickname == other.nickname
+
 
 class Video:
     def __init__(self, title: str, duration: int, time_now: int=0, adult_mode: bool=False):
         """
-        Каждый объект класса Video должен обладать следующими атрибутами и методами:
-        Атриубуты: title(заголовок, строка), duration(продолжительность, секунды), time_now(секунда остановки (изначально 0)), adult_mode(ограничение по возрасту, bool (False по умолчанию))
+        :param title: заголовок, строка
+        :param duration: продолжительность, секунды
+        :param time_now: секунда остановки (изначально 0)
+        :param adult_mode: ограничение по возрасту, bool (False по умолчанию)
         """
         self.title = title
         self.duration = duration
         self.time_now = time_now
         self.adult_mode = adult_mode
+
+    def __eq__(self, other: 'Video'):
+        return self.title == other.title
 
 
 class UrTube:
@@ -33,60 +52,94 @@ class UrTube:
 
     def add(self, *args):
         """
-        Метод add, который принимает неограниченное кол-во объектов класса Video и все добавляет в videos, если с таким же названием видео ещё не существует. В противном случае ничего не происходит.
-        :param args:
-        :return:
+        Метод add, который принимает неограниченное кол-во объектов класса Video и все добавляет в videos,
+        если с таким же названием видео ещё не существует. В противном случае ничего не происходит.
+        :param args: неограниченное кол-во объектов класса Video
         """
         for video in args:
-            self.videos.append(video)
+            if not video in self.videos:
+                self.videos.append(video)
 
     def get_videos(self, title: str) -> list[str]:
         """
-        Метод get_videos, который принимает поисковое слово и возвращает список названий всех видео, содержащих поисковое слово. Следует учесть, что слово 'UrbaN' присутствует в строке 'Urban the best' (не учитывать регистр).
-        :param title:
-        :return:
+        :param title: поисковое слово
+        :return: список названий всех видео, содержащих поисковое слово.
+                 Следует учесть, что слово 'UrbaN' присутствует в строке 'Urban the best' (не учитывать регистр).
         """
         return [video.title for video in self.videos if title.upper() in video.title.upper()]
 
     def watch_video(self, title: str):
         """
-        Метод watch_video, который принимает название фильма, если не находит точного совпадения(вплоть до пробела), то ничего не воспроизводится, если же находит - ведётся отчёт в консоль на какой секунде ведётся просмотр. После текущее время просмотра данного видео сбрасывается.
+        Метод watch_video, который принимает название фильма, если не находит точного совпадения(вплоть до пробела),
+        то ничего не воспроизводится, если же находит - ведётся отчёт в консоль на какой секунде ведётся просмотр.
+        После текущее время просмотра данного видео сбрасывается.
         Для метода watch_video так же учитывайте следующие особенности:
         Для паузы между выводами секунд воспроизведения можно использовать функцию sleep из модуля time.
         Воспроизводить видео можно только тогда, когда пользователь вошёл в UrTube. В противном случае выводить в консоль надпись: "Войдите в аккаунт, чтобы смотреть видео"
         Если видео найдено, следует учесть, что пользователю может быть отказано в просмотре, т.к. есть ограничения 18+. Должно выводиться сообщение: "Вам нет 18 лет, пожалуйста покиньте страницу"
         После воспроизведения нужно выводить: "Конец видео"
-        :param title:
-        :return:
+        :param title: название фильма
         """
         if self.current_user is None:
             print("Войдите в аккаунт, чтобы смотреть видео")
             return
 
+        for video in self.videos:
+            if video.title == title:
+                break
+        else:
+            return
+
+        if video.adult_mode and self.current_user.age < 18:
+            print("Вам нет 18 лет, пожалуйста покиньте страницу")
+            return
+
+        for time in range(video.time_now+1, video.duration+1):
+            print(time, end=' ', flush=True)
+            sleep(1)
+
         print("Конец видео")
 
     def register(self, nickname: str, password: str, age: int):
         """
-        Метод register, который принимает три аргумента: nickname, password, age, и добавляет пользователя в список, если пользователя не существует (с таким же nickname). Если существует, выводит на экран: "Пользователь {nickname} уже существует". После регистрации, вход выполняется автоматически.
-        :param nickname:
-        :param password:
-        :param age:
-        :return:
+        Метод register, который принимает три аргумента: nickname, password, age,
+        и добавляет пользователя в список, если пользователя не существует (с таким же nickname).
+        Если существует, выводит на экран: "Пользователь {nickname} уже существует".
+        После регистрации, вход выполняется автоматически.
+        :param nickname: имя пользователя
+        :param password: пароль
+        :param age: возраст
         """
-        print(f"Пользователь {nickname} уже существует")
+        new_user = User(nickname, calculate_hash(password), age)
+        if new_user in self.users:
+            print(f"Пользователь {nickname} уже существует")
+            return
+        self.users.append(new_user)
+        self.log_in(nickname, password)
 
     def log_in(self, nickname: str, password: str):
         """
-        Метод log_in, который принимает на вход аргументы: nickname, password и пытается найти пользователя в users с такими же логином и паролем. Если такой пользователь существует, то current_user меняется на найденного. Помните, что password передаётся в виде строки, а сравнивается по хэшу.
+        Метод log_in, который принимает на вход аргументы: nickname, password и пытается найти пользователя
+        в users с такими же логином и паролем. Если такой пользователь существует, то current_user меняется на найденного.
+        Помните, что password передаётся в виде строки, а сравнивается по хэшу.
+        :param nickname: имя пользователя
+        :param password: пароль
+        :return:
         """
+        for user in self.users:
+            if user.nickname == nickname:
+                if user.password_hash == calculate_hash(password):
+                    self.current_user = user
+                else:
+                    print("Неверный пароль")
+                return
         print(f"Пользователь {nickname} не найден")
 
     def log_out(self):
         """
         Метод log_out для сброса текущего пользователя на None.
-        :return:
         """
-        pass
+        self.current_user = None
 
 
 def main():
