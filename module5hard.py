@@ -11,6 +11,7 @@ class User:
 def main():
     pass
 
+
 def test():
     ur = UrTube()
     v1 = Video('Лучший язык программирования 2024 года', 200)
